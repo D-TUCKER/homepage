@@ -1,0 +1,14 @@
+.chart-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.chart-item {
+  width: 50%;
+}
+
+@media (max-width: 500px) {
+  .chart-item {
+    width: 100%;
+  }
+}
