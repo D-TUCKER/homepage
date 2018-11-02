@@ -2,11 +2,13 @@
 // @ts-check
 import damlev from "damlev";
 
+const timeout = ms => new Promise(res => setTimeout(res, ms));
+
 class bkTree {
   /**
    * Creates an instance of bkTree.
-   * @param {string[]|string} term 
-   * @param {object} options 
+   * @param {string[]|string} term
+   * @param {object} options
    * @memberof bkTree
    */
   constructor(term, options) {
@@ -14,6 +16,8 @@ class bkTree {
     this._addTerm = this._addTerm.bind(this);
     this.query = this.query.bind(this);
     this._query = this._query.bind(this);
+    this.slowQuery = this.slowQuery.bind(this);
+    this._slowQuery = this._slowQuery.bind(this);
 
     options = options || {};
     this.stringCompare = damlev;
@@ -31,20 +35,20 @@ class bkTree {
     this.children = {};
   }
   /**
- * Add an array of terms to the tree.
- * 
- * @param {string[]} newTerms 
- * @memberof bkTree
- */
+   * Add an array of terms to the tree.
+   *
+   * @param {string[]} newTerms
+   * @memberof bkTree
+   */
   addTerms(newTerms) {
     newTerms.forEach(term => this._addTerm(term));
   }
   /**
- * Recurse through and add children
- * 
- * @param {string} newTerm 
- * @memberof bkTree
- */
+   * Recurse through and add children
+   *
+   * @param {string} newTerm
+   * @memberof bkTree
+   */
   _addTerm(newTerm) {
     // Get the distance between the words
     const dist = this.stringCompare(this.term, newTerm);
@@ -56,18 +60,17 @@ class bkTree {
     }
   }
   /**
- * 
- * Returns an array of matching results given a
- * string, distance and max number of results.
- * 
- * @param {string} queryTerm 
- * @param {number} maxDist 
- * @param {number} [max=null] 
- * @returns {object[]|string[]}
- * @memberof bkTree
- */
+   *
+   * Returns an array of matching results given a
+   * string, distance and max number of results.
+   *
+   * @param {string} queryTerm
+   * @param {number} maxDist
+   * @param {number} [max=null]
+   * @returns {object[]|string[]}
+   * @memberof bkTree
+   */
   query(queryTerm, maxDist, max = null) {
-
     // this is mutated by this.query, which is kind of ugly.
     let tempResults = [];
 
@@ -86,15 +89,15 @@ class bkTree {
     return results;
   }
   /**
- * Recurses throught the bk tree finding matches 
- * within the max distance. 
- * 
- * @param {string} queryTerm 
- * @param {number} maxDist 
- * @param {number} d 
- * @param {object[]} results 
- * @memberof bkTree
- */
+   * Recurses throught the bk tree finding matches
+   * within the max distance.
+   *
+   * @param {string} queryTerm
+   * @param {number} maxDist
+   * @param {number} d
+   * @param {object[]} results
+   * @memberof bkTree
+   */
   _query(queryTerm, maxDist, d, results) {
     const dist = this.stringCompare(this.term, queryTerm);
 
@@ -112,6 +115,72 @@ class bkTree {
     for (let i = min; i <= max; ++i) {
       if (this.children[i]) {
         this.children[i]._query(queryTerm, maxDist, d, results);
+      }
+    }
+  }
+
+  /**
+   *
+   * Returns an array of matching results given a
+   * string, distance and max number of results.
+   *
+   * @param {string} queryTerm
+   * @param {number} maxDist
+   * @param {number} [max=null]
+   * @returns {object[]|string[]}
+   * @memberof bkTree
+   */
+  slowQuery(queryTerm, maxDist, max = null) {
+    // this is mutated by this.query, which is kind of ugly.
+    let tempResults = [];
+    this._slowQuery(queryTerm, maxDist, null, tempResults);
+
+    tempResults.sort((a, b) => a.dist - b.dist);
+
+    let results = [];
+    let len = tempResults.length;
+    if (null !== max) {
+      len = Math.min(max, tempResults.length);
+    }
+    for (let i = 0; i < len; ++i) {
+      results.push(this.options.details ? tempResults[i] : tempResults[i].t);
+    }
+    return results;
+  }
+
+  /**
+   * Recurses throught the bk tree finding matches
+   * within the max distance.
+   *
+   * @param {string} queryTerm
+   * @param {number} maxDist
+   * @param {number} d
+   * @param {object[]} results
+   * @memberof bkTree
+   */
+  async _slowQuery(queryTerm, maxDist, d, results) {
+    await timeout(1000);
+
+    const dist = this.stringCompare(this.term, queryTerm);
+    const ele = document.getElementById(this.term);
+
+    if (dist <= maxDist) {
+      ele.style.fill = "green";
+      results.push({ term: this.term, dist });
+    } else {
+      ele.style.fill = "red";
+    }
+
+    if (null === d) {
+      d = dist;
+    }
+
+    const min = dist - maxDist;
+    const max = dist + maxDist;
+
+    for (let i = min; i <= max; ++i) {
+      if (this.children[i]) {
+        this.children[i]._slowQuery(queryTerm, maxDist, d, results);
       }
     }
   }
