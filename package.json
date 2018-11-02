@@ -6,10 +6,13 @@
   },
   "dependencies": {
     "@zeit/next-css": "^1.0.1",
+    "damlev": "^1.0.0",
+    "downshift": "^3.1.4",
     "next": "^7.0.2",
     "react": "^16.6.0",
     "react-dom": "^16.6.0",
     "regression": "^2.0.1",
     "victory": "^30.6.0"
-  }
+  },
+  "license": "MIT"
 }
